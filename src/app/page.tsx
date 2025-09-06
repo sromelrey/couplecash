@@ -1,103 +1,442 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState } from "react";
+import {
+  useFinanceStore,
+  Income,
+  Expense,
+  CreditCard,
+  Cash,
+  DebitCard,
+} from "@/lib/store";
+import { FinancialOverview } from "@/components/financial-overview";
+import { TransactionsList } from "@/components/transactions-list";
+import { IncomeModal } from "@/components/income-modal";
+import { ExpenseModal } from "@/components/expense-modal";
+import { CreditCardModal } from "@/components/credit-card-modal";
+import { CashModal } from "@/components/cash-modal";
+import { DebitCardModal } from "@/components/debit-card-modal";
+import { HelpModal } from "@/components/help-modal";
+import { Button } from "@/components/ui/button";
+import { Plus, Wallet } from "lucide-react";
+import {
+  getUsers,
+  getIncomes,
+  getExpenses,
+  getCreditCards,
+  getCash,
+  getDebitCards,
+  createIncome,
+  updateIncome,
+  deleteIncome,
+  createExpense,
+  updateExpense,
+  deleteExpense,
+  createCreditCard,
+  updateCreditCard,
+  deleteCreditCard,
+  createCash,
+  updateCash,
+  deleteCash,
+  createDebitCard,
+  updateDebitCard,
+  deleteDebitCard,
+} from "@/lib/actions";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const {
+    users,
+    setUsers,
+    setIncomes,
+    setExpenses,
+    setCreditCards,
+    setCash,
+    setDebitCards,
+    addIncome,
+    updateIncome: updateIncomeStore,
+    deleteIncome: deleteIncomeStore,
+    addExpense,
+    updateExpense: updateExpenseStore,
+    deleteExpense: deleteExpenseStore,
+    addCreditCard,
+    updateCreditCard: updateCreditCardStore,
+    deleteCreditCard: deleteCreditCardStore,
+    addCash,
+    updateCash: updateCashStore,
+    deleteCash: deleteCashStore,
+    addDebitCard,
+    updateDebitCard: updateDebitCardStore,
+    deleteDebitCard: deleteDebitCardStore,
+  } = useFinanceStore();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const [isLoading, setIsLoading] = useState(true);
+  const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
+  const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  const [isCreditCardModalOpen, setIsCreditCardModalOpen] = useState(false);
+  const [editingIncome, setEditingIncome] = useState<Income | null>(null);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [editingCreditCard, setEditingCreditCard] = useState<CreditCard | null>(
+    null
+  );
+  const [isCashModalOpen, setIsCashModalOpen] = useState(false);
+  const [editingCash, setEditingCash] = useState<Cash | null>(null);
+  const [isDebitCardModalOpen, setIsDebitCardModalOpen] = useState(false);
+  const [editingDebitCard, setEditingDebitCard] = useState<DebitCard | null>(
+    null
+  );
+
+  // Load initial data
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [
+          usersData,
+          incomesData,
+          expensesData,
+          creditCardsData,
+          cashData,
+          debitCardsData,
+        ] = await Promise.all([
+          getUsers(),
+          getIncomes(),
+          getExpenses(),
+          getCreditCards(),
+          getCash(),
+          getDebitCards(),
+        ]);
+
+        setUsers(usersData);
+        setIncomes(incomesData);
+        setExpenses(expensesData);
+        setCreditCards(creditCardsData);
+        setCash(cashData);
+        setDebitCards(debitCardsData);
+      } catch (error) {
+        console.error("Failed to load data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [
+    setUsers,
+    setIncomes,
+    setExpenses,
+    setCreditCards,
+    setCash,
+    setDebitCards,
+  ]);
+
+  // Income handlers
+  const handleAddIncome = () => {
+    setEditingIncome(null);
+    setIsIncomeModalOpen(true);
+  };
+
+  const handleEditIncome = (income: Income) => {
+    setEditingIncome(income);
+    setIsIncomeModalOpen(true);
+  };
+
+  const handleSaveIncome = async (
+    incomeData: Omit<Income, "id" | "created_at">
+  ) => {
+    try {
+      if (editingIncome) {
+        await updateIncome(editingIncome.id, incomeData);
+        updateIncomeStore(editingIncome.id, incomeData);
+      } else {
+        await createIncome(incomeData);
+        addIncome(incomeData);
+      }
+    } catch (error) {
+      console.error("Failed to save income:", error);
+    }
+  };
+
+  const handleDeleteIncome = async (id: number) => {
+    try {
+      await deleteIncome(id);
+      deleteIncomeStore(id);
+    } catch (error) {
+      console.error("Failed to delete income:", error);
+    }
+  };
+
+  // Expense handlers
+  const handleAddExpense = () => {
+    setEditingExpense(null);
+    setIsExpenseModalOpen(true);
+  };
+
+  const handleEditExpense = (expense: Expense) => {
+    setEditingExpense(expense);
+    setIsExpenseModalOpen(true);
+  };
+
+  const handleSaveExpense = async (
+    expenseData: Omit<Expense, "id" | "created_at">
+  ) => {
+    try {
+      if (editingExpense) {
+        await updateExpense(editingExpense.id, expenseData);
+        updateExpenseStore(editingExpense.id, expenseData);
+      } else {
+        await createExpense(expenseData);
+        addExpense(expenseData);
+      }
+    } catch (error) {
+      console.error("Failed to save expense:", error);
+    }
+  };
+
+  const handleDeleteExpense = async (id: number) => {
+    try {
+      await deleteExpense(id);
+      deleteExpenseStore(id);
+    } catch (error) {
+      console.error("Failed to delete expense:", error);
+    }
+  };
+
+  // Credit card handlers
+  const handleAddCreditCard = () => {
+    setEditingCreditCard(null);
+    setIsCreditCardModalOpen(true);
+  };
+
+  const handleEditCreditCard = (card: CreditCard) => {
+    setEditingCreditCard(card);
+    setIsCreditCardModalOpen(true);
+  };
+
+  const handleSaveCreditCard = async (
+    cardData: Omit<CreditCard, "id" | "created_at">
+  ) => {
+    try {
+      if (editingCreditCard) {
+        await updateCreditCard(editingCreditCard.id, cardData);
+        updateCreditCardStore(editingCreditCard.id, cardData);
+      } else {
+        await createCreditCard(cardData);
+        addCreditCard(cardData);
+      }
+    } catch (error) {
+      console.error("Failed to save credit card:", error);
+    }
+  };
+
+  const handleDeleteCreditCard = async (id: number) => {
+    try {
+      await deleteCreditCard(id);
+      deleteCreditCardStore(id);
+    } catch (error) {
+      console.error("Failed to delete credit card:", error);
+    }
+  };
+
+  // Cash handlers
+  const handleAddCash = () => {
+    setEditingCash(null);
+    setIsCashModalOpen(true);
+  };
+
+  const handleEditCash = (cash: Cash) => {
+    setEditingCash(cash);
+    setIsCashModalOpen(true);
+  };
+
+  const handleSaveCash = async (cashData: Omit<Cash, "id" | "created_at">) => {
+    try {
+      if (editingCash) {
+        await updateCash(editingCash.id, cashData);
+        updateCashStore(editingCash.id, cashData);
+      } else {
+        await createCash(cashData);
+        addCash(cashData);
+      }
+    } catch (error) {
+      console.error("Failed to save cash:", error);
+    }
+  };
+
+  const handleDeleteCash = async (id: number) => {
+    try {
+      await deleteCash(id);
+      deleteCashStore(id);
+    } catch (error) {
+      console.error("Failed to delete cash:", error);
+    }
+  };
+
+  // Debit card handlers
+  const handleAddDebitCard = () => {
+    setEditingDebitCard(null);
+    setIsDebitCardModalOpen(true);
+  };
+
+  const handleEditDebitCard = (card: DebitCard) => {
+    setEditingDebitCard(card);
+    setIsDebitCardModalOpen(true);
+  };
+
+  const handleSaveDebitCard = async (
+    cardData: Omit<DebitCard, "id" | "created_at">
+  ) => {
+    try {
+      if (editingDebitCard) {
+        await updateDebitCard(editingDebitCard.id, cardData);
+        updateDebitCardStore(editingDebitCard.id, cardData);
+      } else {
+        await createDebitCard(cardData);
+        addDebitCard(cardData);
+      }
+    } catch (error) {
+      console.error("Failed to save debit card:", error);
+    }
+  };
+
+  const handleDeleteDebitCard = async (id: number) => {
+    try {
+      await deleteDebitCard(id);
+      deleteDebitCardStore(id);
+    } catch (error) {
+      console.error("Failed to delete debit card:", error);
+    }
+  };
+
+  // Modal close handlers
+  const handleCloseIncomeModal = () => {
+    setIsIncomeModalOpen(false);
+    setEditingIncome(null);
+  };
+
+  const handleCloseExpenseModal = () => {
+    setIsExpenseModalOpen(false);
+    setEditingExpense(null);
+  };
+
+  const handleCloseCreditCardModal = () => {
+    setIsCreditCardModalOpen(false);
+    setEditingCreditCard(null);
+  };
+
+  const handleCloseCashModal = () => {
+    setIsCashModalOpen(false);
+    setEditingCash(null);
+  };
+
+  const handleCloseDebitCardModal = () => {
+    setIsDebitCardModalOpen(false);
+    setEditingDebitCard(null);
+  };
+
+  if (isLoading) {
+    return (
+      <div className='min-h-screen bg-gray-50 flex items-center justify-center'>
+        <div className='text-center'>
+          <Wallet className='h-12 w-12 mx-auto mb-4 text-blue-600' />
+          <h1 className='text-2xl font-bold text-gray-900 mb-2'>CoupleCash</h1>
+          <p className='text-sm text-gray-600'>Loading your finances...</p>
         </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className='min-h-screen bg-gray-50'>
+      {/* Header */}
+      <header className='bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-10'>
+        <div className='flex items-center justify-between'>
+          <div>
+            <h1 className='text-xl font-bold text-gray-900 flex items-center gap-2'>
+              <Wallet className='h-5 w-5 text-blue-600' />
+              CoupleCash
+            </h1>
+            <p className='text-xs text-gray-600'>
+              Shared budget tracking for couples
+            </p>
+          </div>
+          <div className='flex gap-2'>
+            <HelpModal />
+            <Button size='sm' onClick={handleAddIncome} className='h-8'>
+              <Plus className='h-3 w-3 mr-1' />
+              Income
+            </Button>
+            <Button size='sm' onClick={handleAddExpense} className='h-8'>
+              <Plus className='h-3 w-3 mr-1' />
+              Expense
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className='p-4 space-y-6 pb-20'>
+        {/* Financial Overview */}
+        <FinancialOverview />
+
+        {/* Transactions List */}
+        <TransactionsList
+          onAddIncome={handleAddIncome}
+          onAddExpense={handleAddExpense}
+          onAddCreditCard={handleAddCreditCard}
+          onAddCash={handleAddCash}
+          onAddDebitCard={handleAddDebitCard}
+          onEditIncome={handleEditIncome}
+          onEditExpense={handleEditExpense}
+          onEditCreditCard={handleEditCreditCard}
+          onEditCash={handleEditCash}
+          onEditDebitCard={handleEditDebitCard}
+          onDeleteIncome={handleDeleteIncome}
+          onDeleteExpense={handleDeleteExpense}
+          onDeleteCreditCard={handleDeleteCreditCard}
+          onDeleteCash={handleDeleteCash}
+          onDeleteDebitCard={handleDeleteDebitCard}
+        />
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+      {/* Modals */}
+      <IncomeModal
+        isOpen={isIncomeModalOpen}
+        onClose={handleCloseIncomeModal}
+        onSave={handleSaveIncome}
+        income={editingIncome}
+        users={users}
+      />
+
+      <ExpenseModal
+        isOpen={isExpenseModalOpen}
+        onClose={handleCloseExpenseModal}
+        onSave={handleSaveExpense}
+        expense={editingExpense}
+        users={users}
+      />
+
+      <CreditCardModal
+        isOpen={isCreditCardModalOpen}
+        onClose={handleCloseCreditCardModal}
+        onSave={handleSaveCreditCard}
+        card={editingCreditCard}
+        users={users}
+      />
+
+      <CashModal
+        isOpen={isCashModalOpen}
+        onClose={handleCloseCashModal}
+        onSave={handleSaveCash}
+        cash={editingCash}
+        users={users}
+      />
+
+      <DebitCardModal
+        isOpen={isDebitCardModalOpen}
+        onClose={handleCloseDebitCardModal}
+        onSave={handleSaveDebitCard}
+        card={editingDebitCard}
+        users={users}
+      />
     </div>
   );
 }
